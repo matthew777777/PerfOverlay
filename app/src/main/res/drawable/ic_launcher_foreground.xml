@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Muted sage power trace with a soft filled area: the energy plot, toned down. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillAlpha="0.35"
+        android:fillColor="#4E6E5D"
+        android:pathData="M18,64 L34,64 L44,44 L54,60 L66,38 L78,56 L90,56 L90,78 L18,78 Z" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M18,64 L34,64 L44,44 L54,60 L66,38 L78,56 L90,56"
+        android:strokeColor="#93B5A2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:strokeWidth="4" />
+</vector>

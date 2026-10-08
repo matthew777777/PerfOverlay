@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PerfOverlay</string>
+    <string name="desc">Floating profiler: live W/mA/V + avg-mA plot, battery, CPU per-core freq+load, GPU, temps, network, memory — drawn over other apps.</string>
+    <string name="grant_overlay">1. Grant “Display over other apps”</string>
+    <string name="overlay_granted">Overlay permission: granted</string>
+    <string name="overlay_missing">Overlay permission: MISSING — tap the button above</string>
+    <string name="start_overlay">2. Start overlay</string>
+    <string name="stop_overlay">Stop overlay</string>
+    <string name="reset_energy">Reset session stats</string>
+    <string name="grant_usage">3. Grant “Usage Access” (per-app recording)</string>
+    <string name="usage_granted">Usage Access: granted — samples tag the foreground app</string>
+    <string name="usage_missing">Usage Access: MISSING — recordings tag apps as unknown</string>
+    <string name="start_record">Start recording</string>
+    <string name="stop_record">Stop recording</string>
+    <string name="recording_on">Recording: ON — samples save to Sessions</string>
+    <string name="recording_off">Recording: off</string>
+    <string name="view_sessions">View recorded sessions</string>
+    <string name="interval_label">Sample interval</string>
+    <string name="status_running">Overlay: RUNNING — drag it anywhere, tap ▲/▼ to collapse</string>
+    <string name="status_stopped">Overlay: stopped</string>
+    <string name="notes">Notes: no root, no special permissions — everything comes from public APIs + world-readable sysfs. CPU load uses HardwarePropertiesManager with /proc/stat fallback; GPU is best-effort sysfs. Blocked nodes show N/A (see logcat -s PerfOverlay:D).</string>
+</resources>
