@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg">#FF111318</color>
+    <color name="surface">#FF1A1E24</color>
+    <color name="surface_variant">#FF23262B</color>
+    <color name="sage">#FF93B5A2</color>
+    <color name="on_sage">#FF0F1A15</color>
+    <color name="text">#FFE8EAED</color>
+    <color name="dim">#FF9AA0A6</color>
+    <color name="good">#FF8BC34A</color>
+    <color name="bad">#FFEF5350</color>
+</resources>

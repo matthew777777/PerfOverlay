@@ -1,6 +1,5 @@
 package com.matthew.perfoverlay
 
-import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -8,24 +7,27 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.widget.Button
-import android.widget.RadioGroup
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
+import com.google.android.material.button.MaterialButtonToggleGroup
 import com.matthew.perfoverlay.monitor.ForegroundAppTracker
 import com.matthew.perfoverlay.overlay.OverlayService
 
 /** Launcher screen: permissions, sampling, overlay, recording, sessions. */
-class MainActivity : Activity() {
+class MainActivity : AppCompatActivity() {
     private lateinit var txtOverlayState: TextView
     private lateinit var txtStatus: TextView
     private lateinit var btnToggle: Button
-    private lateinit var rgInterval: RadioGroup
+    private lateinit var rgInterval: MaterialButtonToggleGroup
     private lateinit var txtUsageState: TextView
     private lateinit var txtRecordState: TextView
     private lateinit var btnRecord: Button
     private lateinit var tracker: ForegroundAppTracker
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
@@ -89,7 +91,9 @@ class MainActivity : Activity() {
         findViewById<Button>(R.id.btnSessions).setOnClickListener {
             startActivity(Intent(this, SessionsActivity::class.java))
         }
-        rgInterval.setOnCheckedChangeListener { _, _ -> saveInterval() }
+        rgInterval.addOnButtonCheckedListener { _, _, isChecked ->
+            if (isChecked) saveInterval()
+        }
         restoreInterval()
     }
 
@@ -118,7 +122,7 @@ class MainActivity : Activity() {
     }
 
     private fun saveInterval() {
-        val ms = when (rgInterval.checkedRadioButtonId) {
+        val ms = when (rgInterval.checkedButtonId) {
             R.id.rb500 -> 500L
             R.id.rb2000 -> 2000L
             else -> 1000L

@@ -40,10 +40,10 @@ class OverlayViewTest {
 
         // Every attached child is parented exactly to its container.
         assertSingleParenting(view)
-        // Header + body at top level; header holds title, mini, 3 buttons;
+        // Header + body at top level; header holds title, mini, 4 buttons;
         // body holds plot + 8 readouts.
         assertEquals(2, view.childCount)
-        assertEquals(5, (view.getChildAt(0) as ViewGroup).childCount)
+        assertEquals(6, (view.getChildAt(0) as ViewGroup).childCount)
         val body = view.getChildAt(1) as ViewGroup
         assertEquals(9, body.childCount)
         assertTrue(body.getChildAt(0) is EnergyPlotView)
@@ -91,11 +91,31 @@ class OverlayViewTest {
     fun recordingTintsTitleRed() {
         val activity = Robolectric.buildActivity(Activity::class.java).setup().get()
         val view = OverlayView(activity)
-        val title = (view.getChildAt(0) as ViewGroup).getChildAt(0) as android.widget.TextView
+        val header = view.getChildAt(0) as ViewGroup
+        val title = header.getChildAt(0) as android.widget.TextView
+        val rec = header.getChildAt(4) as android.widget.Button
         view.setRecording(true)
         assertEquals(0xFFEF5350.toInt(), title.currentTextColor)
+        assertEquals("■", rec.text.toString())
         view.setRecording(false)
         assertEquals(0xFF8BC34A.toInt(), title.currentTextColor)
+        assertEquals("●", rec.text.toString())
+    }
+
+    @Test
+    fun recordButtonFiresToggle() {
+        val activity = Robolectric.buildActivity(Activity::class.java).setup().get()
+        val view = OverlayView(activity)
+        var toggles = 0
+        view.callbacks = object : OverlayView.Callbacks {
+            override fun onReset() {}
+            override fun onClose() {}
+            override fun onCollapsed(collapsed: Boolean) {}
+            override fun onRecordToggle() { toggles++ }
+        }
+        val rec = (view.getChildAt(0) as ViewGroup).getChildAt(4) as android.widget.Button
+        assertTrue(rec.performClick())
+        assertEquals(1, toggles)
     }
 
     private fun assertSingleParenting(group: ViewGroup) {

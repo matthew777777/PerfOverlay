@@ -1,6 +1,5 @@
 package com.matthew.perfoverlay
 
-import android.app.Activity
 import android.content.pm.PackageManager
 import android.graphics.Typeface
 import android.os.Bundle
@@ -14,7 +13,7 @@ import java.io.File
 import java.util.Locale
 
 /** Session preview: totals, mA replay plot, per-app breakdown. */
-class SessionDetailActivity : Activity() {
+class SessionDetailActivity : androidx.appcompat.app.AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val path = intent.getStringExtra("path")
@@ -26,6 +25,7 @@ class SessionDetailActivity : Activity() {
             }
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
+            fitsSystemWindows = true
             setPadding(dp(16), dp(16), dp(16), dp(16))
         }
         if (session == null || session.rows.isEmpty()) {

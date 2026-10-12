@@ -283,6 +283,10 @@ class OverlayService : Service() {
                 } catch (_: Exception) {
                 }
             }
+
+            override fun onRecordToggle() {
+                if (isRecording) stopRecording() else startRecording()
+            }
         }
         // Drag by the header title.
         var downX = 0f

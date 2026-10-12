@@ -1,5 +1,6 @@
 package com.matthew.perfoverlay.record
 
+import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -51,6 +52,25 @@ class SessionStoreTest {
     @Test
     fun displayNameFallsBack() {
         assertEquals("custom", SessionStore.displayName("custom.csv"))
+    }
+
+    @Test
+    fun listFilesFiltersAndSorts() {
+        val dir = java.nio.file.Files.createTempDirectory("sessions").toFile()
+        try {
+            File(dir, "perfoverlay-20261008-220000.csv").writeText("t_ms,package\n")
+            File(dir, "perfoverlay-20261008-230000.csv").writeText("t_ms,package\n")
+            File(dir, "notes.txt").writeText("x")
+            File(dir, "perfoverlay-20261008-230000.meta").writeText("x")
+            val names = SessionStore.listFiles(dir).map { it.name }
+            assertEquals(
+                listOf("perfoverlay-20261008-230000.csv", "perfoverlay-20261008-220000.csv"),
+                names,
+            )
+            assertEquals(emptyList<String>(), SessionStore.listFiles(File(dir, "missing")).map { it.name })
+        } finally {
+            dir.deleteRecursively()
+        }
     }
 
     private fun row(t: Long, pkg: String, ma: Double, w: Double) =

@@ -43,9 +43,11 @@ object SessionStore {
     fun sessionsDir(context: Context): File =
         context.getExternalFilesDir("sessions") ?: File(context.filesDir, "sessions")
 
-    fun list(context: Context): List<File> =
+    fun list(context: Context): List<File> = listFiles(sessionsDir(context))
+
+    fun listFiles(dir: File): List<File> =
         try {
-            sessionsDir(context).listFiles { f ->
+            dir.listFiles { f ->
                 f.isFile && f.name.startsWith("perfoverlay-") && f.name.endsWith(".csv")
             }?.sortedByDescending { it.name } ?: emptyList()
         } catch (_: Exception) {

@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.PerfOverlay" parent="android:Theme.Material.NoActionBar">
-        <item name="android:windowBackground">#FF111318</item>
-        <item name="android:textColor">#FFE8EAED</item>
-        <item name="android:textColorPrimary">#FFE8EAED</item>
+    <style name="Theme.PerfOverlay" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/sage</item>
+        <item name="colorOnPrimary">@color/on_sage</item>
+        <item name="colorSecondary">@color/sage</item>
+        <item name="android:windowBackground">@color/bg</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorSurfaceVariant">@color/surface_variant</item>
+        <item name="colorOnSurface">@color/text</item>
+        <item name="colorOnSurfaceVariant">@color/dim</item>
+        <item name="colorError">@color/bad</item>
     </style>
 </resources>

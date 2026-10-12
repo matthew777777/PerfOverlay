@@ -27,6 +27,7 @@ class OverlayView(context: Context) : LinearLayout(context) {
         fun onReset()
         fun onClose()
         fun onCollapsed(collapsed: Boolean)
+        fun onRecordToggle()
     }
 
     var callbacks: Callbacks? = null
@@ -45,6 +46,7 @@ class OverlayView(context: Context) : LinearLayout(context) {
     private val txtNet: TextView
     private val txtMini: TextView
     private val btnCollapse: Button
+    private val btnRecord: Button
     private var collapsed = false
 
     fun isCollapsed(): Boolean = collapsed
@@ -84,6 +86,8 @@ class OverlayView(context: Context) : LinearLayout(context) {
         btnCollapse = smallButton("▼").apply { setOnClickListener { setCollapsed(!collapsed) } }
         headerRow.addView(btnCollapse)
         headerRow.addView(smallButton("R").apply { setOnClickListener { callbacks?.onReset() } })
+        btnRecord = smallButton("●").apply { setOnClickListener { callbacks?.onRecordToggle() } }
+        headerRow.addView(btnRecord)
         headerRow.addView(smallButton("X").apply { setOnClickListener { callbacks?.onClose() } })
         addView(headerRow)
         header = headerRow
@@ -122,9 +126,11 @@ class OverlayView(context: Context) : LinearLayout(context) {
 
     fun resetPlot() = plot.clear()
 
-    /** Red Perf title while recording, green otherwise. */
+    /** Red Perf title + square while recording, green + dot otherwise. */
     fun setRecording(recording: Boolean) {
         title.setTextColor(if (recording) Color.rgb(0xEF, 0x53, 0x50) else Color.rgb(0x8B, 0xC3, 0x4A))
+        btnRecord.text = if (recording) "■" else "●"
+        btnRecord.setTextColor(if (recording) Color.rgb(0xEF, 0x53, 0x50) else Color.WHITE)
     }
 
     fun update(s: FullSample) {
