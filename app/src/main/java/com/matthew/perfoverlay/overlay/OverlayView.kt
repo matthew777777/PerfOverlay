@@ -35,6 +35,13 @@ class OverlayView(context: Context) : LinearLayout(context) {
     val header: View
     private val title: TextView
     private val plot: EnergyPlotView
+    private val prefs =
+        context.getSharedPreferences(OverlayService.PREFS, Context.MODE_PRIVATE)
+    private var metrics: List<PlotMetric> = PlotMetrics.all(0)
+    private val histories = LinkedHashMap<String, ArrayDeque<Float>>()
+    private var plotKey: String =
+        prefs.getString(OverlayService.KEY_PLOT_METRIC, PlotMetrics.DEFAULT_KEY)
+            ?: PlotMetrics.DEFAULT_KEY
     private val body: LinearLayout
     private val txtPower: TextView
     private val txtEnergy: TextView
@@ -95,8 +102,14 @@ class OverlayView(context: Context) : LinearLayout(context) {
         body = LinearLayout(context).apply { orientation = VERTICAL }
         plot = EnergyPlotView(context).apply {
             layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, dp(96))
+            isClickable = true
+            isFocusable = false
+            setOnClickListener { cyclePlotMetric() }
         }
         body.addView(plot)
+        // Display-only: plotKey stays raw so a persisted core key resolves
+        // once the first sample reveals the real core count.
+        showMetric(PlotMetrics.byKey(plotKey, 0))
         txtPower = monoText(12f, Color.WHITE)
         txtEnergy = monoText(12f, Color.rgb(0xFF, 0xE0, 0x82))
         txtBat = monoText(12f, Color.WHITE)
@@ -124,7 +137,42 @@ class OverlayView(context: Context) : LinearLayout(context) {
         callbacks?.onCollapsed(c)
     }
 
-    fun resetPlot() = plot.clear()
+    fun resetPlot() {
+        histories.clear()
+        plot.clear()
+    }
+
+    /** Currently plotted metric key, e.g. "ma", "w", "core3". */
+    fun plotMetricKey(): String = plotKey
+
+    /** Shows the named metric, loading its accumulated history. */
+    fun setPlotMetric(key: String) {
+        applyPlotMetric(PlotMetrics.byKey(key, coreCount()), persist = true)
+    }
+
+    private fun coreCount(): Int = metrics.count { it.key.startsWith("core") }
+
+    private fun cyclePlotMetric() {
+        val idx = metrics.indexOfFirst { it.key == plotKey }.coerceAtLeast(0)
+        applyPlotMetric(metrics[(idx + 1) % metrics.size], persist = true)
+    }
+
+    private fun applyPlotMetric(metric: PlotMetric, persist: Boolean) {
+        plotKey = metric.key
+        showMetric(metric)
+        if (persist) {
+            prefs.edit().putString(OverlayService.KEY_PLOT_METRIC, plotKey).apply()
+        }
+    }
+
+    private fun showMetric(metric: PlotMetric) {
+        plot.metricLabel = metric.label
+        plot.metricFormat = metric.format
+        plot.setSeries(historyOf(metric.key))
+    }
+
+    private fun historyOf(key: String): ArrayDeque<Float> =
+        histories.getOrPut(key) { ArrayDeque() }
 
     /** Red Perf title + square while recording, green + dot otherwise. */
     fun setRecording(recording: Boolean) {
@@ -134,7 +182,19 @@ class OverlayView(context: Context) : LinearLayout(context) {
     }
 
     fun update(s: FullSample) {
-        plot.push(s.power.currentMa)
+        // Core count can change (hotplug); rebuild the per-core metrics then.
+        if (s.cpu.cores.size != coreCount()) {
+            metrics = PlotMetrics.all(s.cpu.cores.size)
+            applyPlotMetric(PlotMetrics.byKey(plotKey, s.cpu.cores.size), persist = false)
+        }
+        // Every metric accumulates history so tapping the plot always shows
+        // a full series, not a blank graph.
+        for (m in metrics) {
+            val h = historyOf(m.key)
+            h.addLast(m.extract(s)?.takeIf { !it.isNaN() }?.toFloat() ?: Float.NaN)
+            while (h.size > plot.capacity) h.removeFirst()
+        }
+        plot.push(metrics.firstOrNull { it.key == plotKey }?.extract?.invoke(s))
         txtPower.text = String.format(
             Locale.US, "%s %s %s",
             Format.watts(s.power.watts), Format.signedMa(s.power.currentMa, s.power.charging), Format.volts(s.power.voltageV),

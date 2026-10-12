@@ -103,6 +103,60 @@ class OverlayViewTest {
     }
 
     @Test
+    fun tappingPlotCyclesThroughAllMetricsAndWraps() {
+        val activity = Robolectric.buildActivity(Activity::class.java).setup().get()
+        val view = OverlayView(activity)
+        view.update(testSample())
+        assertEquals("ma", view.plotMetricKey())
+
+        val plot = (view.getChildAt(1) as ViewGroup).getChildAt(0) as EnergyPlotView
+        assertTrue(plot.performClick())
+        assertEquals("w", view.plotMetricKey())
+        assertEquals("W", plot.metricLabel)
+
+        // Full cycle (8 cores: ma/w/v/cpu/cores/cpuf/…/tx) wraps to mA.
+        var clicks = 1
+        while (view.plotMetricKey() != "ma" && clicks < 64) {
+            assertTrue(plot.performClick())
+            clicks++
+        }
+        assertEquals("ma", view.plotMetricKey())
+        assertEquals(22, clicks)
+    }
+
+    @Test
+    fun switchingMetricLoadsItsAccumulatedHistory() {
+        val activity = Robolectric.buildActivity(Activity::class.java).setup().get()
+        val view = OverlayView(activity)
+        view.update(testSample())
+        view.update(testSample())
+        val plot = (view.getChildAt(1) as ViewGroup).getChildAt(0) as EnergyPlotView
+
+        view.setPlotMetric("w")
+        assertEquals("w", view.plotMetricKey())
+        assertEquals(listOf(2.0f, 2.0f), plot.snapshot())
+
+        view.setPlotMetric("core3")
+        assertEquals("core3", view.plotMetricKey())
+        assertEquals("Core 3", plot.metricLabel)
+        assertEquals(listOf(30.0f, 30.0f), plot.snapshot())
+
+        view.setPlotMetric("bogus")
+        assertEquals("ma", view.plotMetricKey())
+        assertEquals(listOf(500.0f, 500.0f), plot.snapshot())
+    }
+
+    @Test
+    fun persistedCoreMetricResolvesAfterFirstSample() {
+        val activity = Robolectric.buildActivity(Activity::class.java).setup().get()
+        activity.getSharedPreferences(OverlayService.PREFS, Activity.MODE_PRIVATE).edit()
+            .putString(OverlayService.KEY_PLOT_METRIC, "core2").apply()
+        val view = OverlayView(activity)
+        view.update(testSample())
+        assertEquals("core2", view.plotMetricKey())
+    }
+
+    @Test
     fun recordButtonFiresToggle() {
         val activity = Robolectric.buildActivity(Activity::class.java).setup().get()
         val view = OverlayView(activity)

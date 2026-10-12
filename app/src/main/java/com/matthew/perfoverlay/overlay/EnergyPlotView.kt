@@ -11,8 +11,10 @@ import java.util.ArrayDeque
 import java.util.Locale
 
 /**
- * Rolling live-current (mA) plot with filled area. Background stays
- * transparent — the parent overlay supplies the dim.
+ * Rolling metric plot with filled area. Background stays transparent — the
+ * parent overlay supplies the dim. The plotted series is generic: the owner
+ * sets [metricLabel]/[metricFormat] (or pushes session replay values) and the
+ * header reads "<label> peak <value>".
  */
 class EnergyPlotView @JvmOverloads constructor(
     context: Context,
@@ -20,6 +22,10 @@ class EnergyPlotView @JvmOverloads constructor(
 ) : View(context, attrs) {
     private val samples = ArrayDeque<Float>()
     var capacity: Int = 240
+    /** Short series name for the header, e.g. "mA", "W", "Core 3". */
+    var metricLabel: String = "mA"
+    /** Formats peak values in the header. */
+    var metricFormat: (Double) -> String = { v -> String.format(Locale.US, "%.0f", v) }
 
     private val gridPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.argb(70, 255, 255, 255)
@@ -40,9 +46,9 @@ class EnergyPlotView @JvmOverloads constructor(
         textSize = 24f
     }
 
-    /** Pushes a live current reading in mA (null = unknown gap). */
-    fun push(milliamps: Double?) {
-        val v = milliamps?.takeIf { !it.isNaN() }?.toFloat() ?: Float.NaN
+    /** Pushes one reading of the current series (null = unknown gap). */
+    fun push(value: Double?) {
+        val v = value?.takeIf { !it.isNaN() }?.toFloat() ?: Float.NaN
         samples.addLast(v)
         while (samples.size > capacity) samples.removeFirst()
         invalidate()
@@ -52,6 +58,18 @@ class EnergyPlotView @JvmOverloads constructor(
         samples.clear()
         invalidate()
     }
+
+    /** Replaces the series, e.g. when switching metrics or replaying a session. */
+    fun setSeries(values: Collection<Float?>) {
+        samples.clear()
+        for (v in values) {
+            samples.addLast(v?.takeIf { !it.isNaN() } ?: Float.NaN)
+        }
+        while (samples.size > capacity) samples.removeFirst()
+        invalidate()
+    }
+
+    fun snapshot(): List<Float> = ArrayList(samples)
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
@@ -77,7 +95,7 @@ class EnergyPlotView @JvmOverloads constructor(
             if (s > peak) peak = s
         }
         canvas.drawText(
-            if (!top.isNaN()) String.format(Locale.US, "mA peak %.0f", top) else "mA —",
+            if (!top.isNaN()) "$metricLabel peak ${metricFormat(top.toDouble())}" else "$metricLabel —",
             padL, 22f, labelPaint,
         )
 

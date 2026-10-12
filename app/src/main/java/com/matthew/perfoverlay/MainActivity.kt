@@ -21,6 +21,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var txtStatus: TextView
     private lateinit var btnToggle: Button
     private lateinit var rgInterval: MaterialButtonToggleGroup
+    private lateinit var rgPlot: MaterialButtonToggleGroup
     private lateinit var txtUsageState: TextView
     private lateinit var txtRecordState: TextView
     private lateinit var btnRecord: Button
@@ -95,6 +96,12 @@ class MainActivity : AppCompatActivity() {
             if (isChecked) saveInterval()
         }
         restoreInterval()
+        rgPlot = findViewById(R.id.rgPlot)
+        // Restore before listening so launch doesn't re-fire the setting.
+        restorePlotMetric()
+        rgPlot.addOnButtonCheckedListener { _, checkedId, isChecked ->
+            if (isChecked) savePlotMetric(checkedId)
+        }
     }
 
     override fun onResume() {
@@ -136,6 +143,22 @@ class MainActivity : AppCompatActivity() {
             500L -> rgInterval.check(R.id.rb500)
             2000L -> rgInterval.check(R.id.rb2000)
             else -> rgInterval.check(R.id.rb1000)
+        }
+    }
+
+    private fun savePlotMetric(checkedId: Int) {
+        val key = if (checkedId == R.id.rbPlotW) "w" else "ma"
+        // Persists and retargets the live plot when the overlay is up.
+        OverlayService.setPlotMetric(this, key)
+    }
+
+    private fun restorePlotMetric() {
+        // Tapping the overlay graph can leave any metric selected; the
+        // setting only pins mA vs W, so anything else shows as mA until
+        // the user taps the toggle.
+        when (getSharedPreferences(OverlayService.PREFS, MODE_PRIVATE).getString(OverlayService.KEY_PLOT_METRIC, "ma")) {
+            "w" -> rgPlot.check(R.id.rbPlotW)
+            else -> rgPlot.check(R.id.rbPlotMa)
         }
     }
 

@@ -42,8 +42,11 @@ class OverlayService : Service() {
         const val ACTION_RESET = "com.matthew.perfoverlay.action.RESET"
         const val ACTION_RECORD_START = "com.matthew.perfoverlay.action.RECORD_START"
         const val ACTION_RECORD_STOP = "com.matthew.perfoverlay.action.RECORD_STOP"
+        const val ACTION_PLOT_METRIC = "com.matthew.perfoverlay.action.PLOT_METRIC"
+        const val EXTRA_PLOT_METRIC = "plot_metric"
         const val PREFS = "perf_overlay"
         const val KEY_INTERVAL_MS = "interval_ms"
+        const val KEY_PLOT_METRIC = "plot_metric"
 
         @Volatile
         var isRunning: Boolean = false
@@ -73,6 +76,17 @@ class OverlayService : Service() {
 
         fun recordStop(context: Context) {
             context.startService(Intent(context, OverlayService::class.java).setAction(ACTION_RECORD_STOP))
+        }
+
+        /** Switches the live plot series; persists so it survives restarts. */
+        fun setPlotMetric(context: Context, key: String) {
+            context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+                .putString(KEY_PLOT_METRIC, key).apply()
+            context.startService(
+                Intent(context, OverlayService::class.java)
+                    .setAction(ACTION_PLOT_METRIC)
+                    .putExtra(EXTRA_PLOT_METRIC, key),
+            )
         }
     }
 
@@ -124,6 +138,18 @@ class OverlayService : Service() {
             ACTION_RECORD_STOP -> {
                 stopRecording()
                 return START_STICKY
+            }
+            ACTION_PLOT_METRIC -> {
+                val key = intent.getStringExtra(EXTRA_PLOT_METRIC)
+                val o = overlay
+                if (key != null && o != null) {
+                    mainHandler?.post { o.setPlotMetric(key) }
+                    return START_STICKY
+                }
+                // Setting changed while the overlay is down: prefs already
+                // hold it for next launch, don't linger as an empty service.
+                stopSelf()
+                return START_NOT_STICKY
             }
             else -> { /* START: fall through */ }
         }
