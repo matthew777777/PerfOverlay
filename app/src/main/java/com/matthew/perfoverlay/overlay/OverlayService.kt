@@ -27,6 +27,8 @@ import com.matthew.perfoverlay.monitor.GpuMonitor
 import com.matthew.perfoverlay.monitor.MemMonitor
 import com.matthew.perfoverlay.monitor.NetMonitor
 import com.matthew.perfoverlay.monitor.PowerMonitor
+import com.matthew.perfoverlay.monitor.RootSample
+import com.matthew.perfoverlay.monitor.RootMtkMonitor
 import com.matthew.perfoverlay.monitor.ThermalMonitor
 import com.matthew.perfoverlay.record.SessionRecorder
 import com.matthew.perfoverlay.record.SessionStore
@@ -47,6 +49,7 @@ class OverlayService : Service() {
         const val PREFS = "perf_overlay"
         const val KEY_INTERVAL_MS = "interval_ms"
         const val KEY_PLOT_METRIC = "plot_metric"
+        const val KEY_ROOT_MTK = "root_mtk"
 
         @Volatile
         var isRunning: Boolean = false
@@ -104,6 +107,7 @@ class OverlayService : Service() {
     private lateinit var net: NetMonitor
     private lateinit var tracker: ForegroundAppTracker
     private var recorder: SessionRecorder? = null
+    private var rootMtk: RootMtkMonitor? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -198,6 +202,8 @@ class OverlayService : Service() {
 
     override fun onDestroy() {
         stopRecording()
+        rootMtk?.close()
+        rootMtk = null
         isRunning = false
         sampler?.removeCallbacksAndMessages(null)
         samplerThread?.quitSafely()
@@ -242,11 +248,24 @@ class OverlayService : Service() {
         }
     }
 
+    /** Root sensors are sampled only while the option is on; otherwise the su shell is closed. */
+    private fun sampleRoot(): RootSample? {
+        val enabled = getSharedPreferences(PREFS, MODE_PRIVATE).getBoolean(KEY_ROOT_MTK, false)
+        if (!enabled) {
+            rootMtk?.close()
+            rootMtk = null
+            return null
+        }
+        val monitor = rootMtk ?: RootMtkMonitor().also { rootMtk = it }
+        return monitor.sample()
+    }
+
     private fun tick() {
         val sample: FullSample = try {
             FullSample(
                 power = power.sample(), cpu = cpu.sample(), gpu = gpu.sample(),
                 mem = mem.sample(), thermal = thermal.sample(), net = net.sample(),
+                root = sampleRoot(),
             )
         } catch (_: Exception) {
             return
