@@ -15,6 +15,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import com.matthew.perfoverlay.R
 import com.matthew.perfoverlay.monitor.FullSample
+import com.matthew.perfoverlay.monitor.RootSample
 import com.matthew.perfoverlay.util.Format
 import java.util.Locale
 
@@ -51,6 +52,7 @@ class OverlayView(context: Context) : LinearLayout(context) {
     private val txtGpu: TextView
     private val txtMem: TextView
     private val txtNet: TextView
+    private val txtRoot: TextView
     private val txtMini: TextView
     private val btnCollapse: Button
     private val btnRecord: Button
@@ -118,6 +120,8 @@ class OverlayView(context: Context) : LinearLayout(context) {
         txtGpu = monoText(12f, Color.WHITE)
         txtMem = monoText(12f, Color.WHITE)
         txtNet = monoText(12f, Color.rgb(0xB0, 0xBE, 0xC5))
+        // Root-only MediaTek lines; hidden unless the root option is on.
+        txtRoot = monoText(10f, Color.rgb(0x80, 0xCB, 0xC4)).apply { visibility = View.GONE }
         addView(body)
     }
 
@@ -217,6 +221,23 @@ class OverlayView(context: Context) : LinearLayout(context) {
             Format.rate(s.net.rxBytesPerSec), Format.rate(s.net.txBytesPerSec),
         )
         txtMini.text = withTempColors(miniLine(s))
+        val root = s.root
+        txtRoot.visibility = if (root == null) View.GONE else View.VISIBLE
+        if (root != null) txtRoot.text = rootLines(root)
+    }
+
+    /** GPU freq/OPP/load on line 1, every devfreq node on line 2. */
+    private fun rootLines(r: RootSample): String {
+        if (r.isEmpty) return "ROOT N/A (su denied or MTK nodes blocked)"
+        val gpu = ArrayList<String>()
+        gpu.add("ROOT GPU " + Format.freq(r.gpuFreqKhz))
+        if (r.gpuOpp != null) gpu.add("opp${r.gpuOpp}")
+        if (r.gpuLoadPct != null) gpu.add(Format.pct(r.gpuLoadPct))
+        val lines = arrayListOf(gpu.joinToString(" "))
+        if (r.devfreqs.isNotEmpty()) {
+            lines.add("DEVFREQ " + r.devfreqs.joinToString(" ") { "${it.name} ${Format.freq(it.freqKhz)}" })
+        }
+        return lines.joinToString("\n")
     }
 
     /** Collapsed essentials: W, signed mA, V, battery %, battery temp. */

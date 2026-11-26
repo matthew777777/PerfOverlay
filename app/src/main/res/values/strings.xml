@@ -21,5 +21,9 @@
     <string name="plot_hint">Default graph series — tap the graph on the overlay to cycle CPU cores, temps, GPU, network and more.</string>
     <string name="status_running">Overlay: RUNNING — drag it anywhere, tap ▲/▼ to collapse</string>
     <string name="status_stopped">Overlay: stopped</string>
+    <string name="root_settings">Root (MediaTek)</string>
+    <string name="root_switch">Show GPU freq/OPP/load + devfreq (needs root)</string>
+    <string name="root_on">Root: ON — ROOT GPU and DEVFREQ lines on the overlay (uses su)</string>
+    <string name="root_off">Root: off — no root reads</string>
     <string name="notes">Notes: no root, no special permissions — everything comes from public APIs + world-readable sysfs. CPU load uses HardwarePropertiesManager with /proc/stat fallback; GPU is best-effort sysfs. Blocked nodes show N/A (see logcat -s PerfOverlay:D).</string>
 </resources>

@@ -53,6 +53,30 @@ data class NetSample(
     val txBytesPerSec: Double,
 )
 
+data class DevfreqSample(
+    /** Short label, e.g. "mali", "mtk-dvfsrc". */
+    val name: String,
+    val freqKhz: Long?,
+)
+
+/**
+ * Root-only MediaTek readings (GED GPU freq/OPP/load + every devfreq node).
+ * Each field is null when its node is missing or unreadable.
+ */
+data class RootSample(
+    val gpuFreqKhz: Long?,
+    val gpuOpp: Int?,
+    val gpuLoadPct: Float?,
+    val devfreqs: List<DevfreqSample>,
+) {
+    val isEmpty: Boolean
+        get() = gpuFreqKhz == null && gpuOpp == null && gpuLoadPct == null && devfreqs.isEmpty()
+
+    companion object {
+        val EMPTY = RootSample(null, null, null, emptyList())
+    }
+}
+
 data class FullSample(
     val power: PowerSample,
     val cpu: CpuSample,
@@ -60,4 +84,6 @@ data class FullSample(
     val mem: MemSample,
     val thermal: ThermalSample,
     val net: NetSample,
+    /** Null unless the root option is enabled. */
+    val root: RootSample? = null,
 )

@@ -12,6 +12,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import com.google.android.material.button.MaterialButtonToggleGroup
+import com.google.android.material.materialswitch.MaterialSwitch
 import com.matthew.perfoverlay.monitor.ForegroundAppTracker
 import com.matthew.perfoverlay.overlay.OverlayService
 
@@ -25,6 +26,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var txtUsageState: TextView
     private lateinit var txtRecordState: TextView
     private lateinit var btnRecord: Button
+    private lateinit var swRootMtk: MaterialSwitch
+    private lateinit var txtRootState: TextView
     private lateinit var tracker: ForegroundAppTracker
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -102,6 +105,25 @@ class MainActivity : AppCompatActivity() {
         rgPlot.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (isChecked) savePlotMetric(checkedId)
         }
+        swRootMtk = findViewById(R.id.swRootMtk)
+        txtRootState = findViewById(R.id.txtRootState)
+        // Set the saved state before listening so creation doesn't rewrite it.
+        swRootMtk.isChecked = rootMtkEnabled()
+        swRootMtk.setOnCheckedChangeListener { _, checked ->
+            getSharedPreferences(OverlayService.PREFS, MODE_PRIVATE).edit()
+                .putBoolean(OverlayService.KEY_ROOT_MTK, checked).apply()
+            refreshRootState()
+        }
+    }
+
+    private fun rootMtkEnabled(): Boolean =
+        getSharedPreferences(OverlayService.PREFS, MODE_PRIVATE)
+            .getBoolean(OverlayService.KEY_ROOT_MTK, false)
+
+    private fun refreshRootState() {
+        val on = rootMtkEnabled()
+        txtRootState.text = getString(if (on) R.string.root_on else R.string.root_off)
+        txtRootState.setTextColor(if (on) 0xFF8BC34A.toInt() else 0xFF9AA0A6.toInt())
     }
 
     override fun onResume() {
@@ -126,6 +148,7 @@ class MainActivity : AppCompatActivity() {
         txtRecordState.text = getString(if (recording) R.string.recording_on else R.string.recording_off)
         txtRecordState.setTextColor(if (recording) 0xFFEF5350.toInt() else 0xFF9AA0A6.toInt())
         btnRecord.text = getString(if (recording) R.string.stop_record else R.string.start_record)
+        refreshRootState()
     }
 
     private fun saveInterval() {

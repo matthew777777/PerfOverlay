@@ -18,6 +18,9 @@ Shows, live:
 - **GPU**: load % + freq (best-effort, `N/A` where the vendor blocks sysfs)
 - **Network**: device-wide ↓/↑ KB/s
 - **Memory**: system used/total GB + %
+- **Root (MediaTek, optional)**: switch on in the main screen. Uses `su` to
+  show GPU freq + OPP + busy % (`ROOT GPU`) and every devfreq node
+  (`DEVFREQ`). Off by default; shows `N/A` when root or the nodes are missing
 
 ## Build
 
@@ -26,7 +29,7 @@ cd AndroidStudioProjects/PerfOverlay
 ./gradlew :app:assembleRelease :app:testDebugUnitTest
 ```
 
-APK: `app/build/outputs/apk/release/PerfOverlay-1.1.0-release.apk`
+APK: `app/build/outputs/apk/release/PerfOverlay-1.2.0-release.apk`
 (signed with the debug key for on-device profiling; override via
 `PERFOVERLAY_KEYSTORE*` env for store builds).
 
@@ -74,6 +77,7 @@ breakdown (avg mA/mWh/W/CPU). Pre-1.1 9-column files still open.
 | GPU freq | kgsl `gpuclk` / devfreq `cur_freq` / Mali `cur_freq` | Hz → normalized to kHz |
 | Network | `TrafficStats` total Rx/Tx deltas | KB/s, no permission needed |
 | Memory | `ActivityManager.MemoryInfo` | System-wide |
+| Root GPU/devfreq (MTK) | `su` → `/sys/kernel/ged/hal/current_freqency`, `gpu_utilization`, `/sys/class/devfreq/*/cur_freq` | Opt-in; one persistent `su` shell; first `gpu_utilization` field taken as GPU busy % |
 
 GPU nodes vary per SoC (Adreno/Mali/etc.) and newer Android versions restrict
 some sysfs paths — the overlay shows `N/A` instead of fake data. Denied paths
